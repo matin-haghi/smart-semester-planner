@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="fa">
+  <head>
+    <meta charset="UTF-8" />
+    <title>برنامه‌ریز هوشمند ترم</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        font-family: sans-serif;
+        margin: 0;
+        transition: 0.3s;
+        direction: rtl;
+        text-align: right;
+      }
+      body.dark {
+        background: #0f172a;
+        color: white;
+      }
+      body.light {
+        background: #f1f5f9;
+        color: #020617;
+      }
+      .container {
+        max-width: 750px;
+        margin: auto;
+        padding: 20px;
+      }
+
+      .nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        margin-bottom: 15px;
+      }
+      .nav button {
+        flex: 1;
+        padding: 10px;
+        border-radius: 10px;
+        border: none;
+        cursor: pointer;
+        background: #334155;
+        color: white;
+      }
+      .nav button.active {
+        background: #6366f1;
+      }
+
+      .card {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 15px;
+        border-radius: 12px;
+        margin-bottom: 15px;
+      }
+      body.light .card {
+        background: white;
+      }
+
+      input,
+      button,
+      select,
+      textarea {
+        width: 100%;
+        margin: 6px 0;
+        padding: 8px;
+        border-radius: 8px;
+        border: none;
+        font-size: 14px;
+      }
+      button {
+        background: #6366f1;
+        color: white;
+        cursor: pointer;
+      }
+
+      .course,
+      .planCard,
+      .taskCard {
+        background: rgba(0, 0, 0, 0.15);
+        padding: 10px;
+        margin-top: 8px;
+        border-radius: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      body.light .course,
+      body.light .planCard,
+      body.light .taskCard {
+        background: #e5e7eb;
+      }
+
+      canvas {
+        background: white;
+        border-radius: 8px;
+        width: 100%;
+        max-width: 100%;
+        display: block;
+        margin-top: 10px;
+      }
+
+      section {
+        display: none;
+      }
+      section.active {
+        display: block;
+      }
+
+      @media (max-width: 500px) {
+        .nav button {
+          font-size: 12px;
+        }
+      }
+
+      /* Switch Theme */
+      .switch {
+        position: relative;
+        display: inline-block;
+        width: 60px;
+        height: 30px;
+        margin-bottom: 15px;
+      }
+      .switch input {
+        display: none;
+      }
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: #ccc;
+        transition: 0.4s;
+        border-radius: 30px;
+      }
+      .slider:before {
+        position: absolute;
+        content: "";
+        height: 24px;
+        width: 24px;
+        left: 3px;
+        bottom: 3px;
+        background: white;
+        transition: 0.4s;
+        border-radius: 50%;
+      }
+      input:checked + .slider {
+        background: #6366f1;
+      }
+      input:checked + .slider:before {
+        transform: translateX(30px);
+      }
+      .slider:after {
+        content: "🌙";
+        position: absolute;
+        left: 6px;
+        top: 3px;
+        font-size: 16px;
+      }
+      input:checked + .slider:after {
+        content: "☀️";
+        left: auto;
+        right: 6px;
+      }
+    </style>
+  </head>
+
+  <body class="dark">
+    <div class="container">
+      <h1>📚 برنامه‌ریز هوشمند ترم</h1>
+
+      <div class="nav">
+        <button onclick="go('home')" class="active">🏠 داشبورد</button>
+        <button onclick="go('add')">➕ افزودن درس</button>
+        <button onclick="go('plan')">🧠 برنامه</button>
+        <button onclick="go('report')">📊 گزارش</button>
+        <button onclick="go('tasks')">📝 کارهای روزمره</button>
+      </div>
+
+      <label class="switch">
+        <input
+          type="checkbox"
+          id="themeSwitch"
+          onchange="toggleThemeSwitch()"
+        />
+        <span class="slider"></span>
+      </label>
+
+      <!-- DASHBOARD -->
+      <section id="home" class="active">
+        <div class="card">
+          <h3>📘 درس‌ها</h3>
+          <div id="courseList"></div>
+        </div>
+      </section>
+
+      <!-- ADD COURSE -->
+      <section id="add">
+        <div class="card">
+          <h3>➕ افزودن درس</h3>
+          <label>نام درس</label>
+          <input id="name" placeholder="نام درس" />
+          <label>تعداد واحد</label>
+          <select id="units">
+            <option value="1">1 واحد</option>
+            <option value="2">2 واحد</option>
+            <option value="3">3 واحد</option>
+          </select>
+          <label>سختی درس: <span id="difficultyLabel">5</span></label>
+          <input
+            id="difficulty"
+            type="range"
+            min="1"
+            max="10"
+            value="5"
+            oninput="difficultyLabel.innerText=this.value"
+          />
+          <label>تاریخ امتحان</label>
+          <input id="examDate" type="date" />
+          <button id="addCourseBtn" onclick="addCourse()">ثبت درس</button>
+        </div>
+      </section>
+
+      <!-- PLAN -->
+      <section id="plan">
+        <div class="card">
+          <h3>🧠 برنامه روزانه پیشنهادی</h3>
+          <div id="dailyPlan"></div>
+        </div>
+      </section>
+
+      <!-- REPORT -->
+      <section id="report">
+        <div class="card">
+          <h3>📊 گزارش</h3>
+          <canvas id="chart" width="400" height="180"></canvas>
+          <p id="reportCount"></p>
+          <p>
+            الگوریتم اولویت‌بندی بر اساس نزدیکی امتحان، سختی درس و تعداد واحد
+            است.
+          </p>
+        </div>
+      </section>
+
+      <!-- TASKS -->
+      <section id="tasks">
+        <div class="card">
+          <h3>📝 کارهای روزمره</h3>
+          <input id="taskInput" placeholder="نام کار را وارد کنید" />
+          <button id="addTaskBtn" onclick="addTask()">افزودن کار</button>
+          <div id="taskList"></div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      let courses = JSON.parse(localStorage.getItem("courses")) || [];
+      let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+      let theme = "dark";
+      let editIndex = null;
+
+      /* Navigation */
+      function go(page) {
+        document
+          .querySelectorAll("section")
+          .forEach((s) => s.classList.remove("active"));
+        document.getElementById(page).classList.add("active");
+        document
+          .querySelectorAll(".nav button")
+          .forEach((b) => b.classList.remove("active"));
+        event.target.classList.add("active");
+      }
+
+      /* Theme Switch */
+      const themeSwitch = document.getElementById("themeSwitch");
+      function toggleThemeSwitch() {
+        theme = themeSwitch.checked ? "light" : "dark";
+        document.body.className = theme;
+      }
+
+      /* DOM References */
+      const nameInput = document.getElementById("name");
+      const unitsInput = document.getElementById("units");
+      const difficultyInput = document.getElementById("difficulty");
+      const difficultyLabel = document.getElementById("difficultyLabel");
+      const examDateInput = document.getElementById("examDate");
+      const courseList = document.getElementById("courseList");
+      const dailyPlan = document.getElementById("dailyPlan");
+      const chart = document.getElementById("chart");
+      const reportCount = document.getElementById("reportCount");
+      const taskInput = document.getElementById("taskInput");
+      const taskList = document.getElementById("taskList");
+      const addCourseBtn = document.getElementById("addCourseBtn");
+      const addTaskBtn = document.getElementById("addTaskBtn");
+
+      /* Save */
+      function save() {
+        localStorage.setItem("courses", JSON.stringify(courses));
+        localStorage.setItem("tasks", JSON.stringify(tasks));
+      }
+
+      /* Add / Edit Course */
+      function addCourse() {
+        const name = nameInput.value.trim();
+        const units = +unitsInput.value;
+        const difficulty = +difficultyInput.value;
+        const examDate = examDateInput.value;
+
+        if (!name || !examDate) {
+          alert("همه فیلدها را وارد کنید");
+          return;
+        }
+
+        if (editIndex !== null) {
+          courses[editIndex] = { name, units, difficulty, examDate };
+          editIndex = null;
+          addCourseBtn.innerText = "ثبت درس";
+        } else {
+          courses.push({ name, units, difficulty, examDate });
+        }
+
+        save();
+        render();
+        go("home");
+        nameInput.value = "";
+        examDateInput.value = "";
+        unitsInput.value = "1";
+        difficultyInput.value = "5";
+        difficultyLabel.innerText = "5";
+      }
+
+      /* Edit/Delete Course */
+      function editCourse(index) {
+        const c = courses[index];
+        nameInput.value = c.name;
+        unitsInput.value = c.units;
+        difficultyInput.value = c.difficulty;
+        difficultyLabel.innerText = c.difficulty;
+        examDateInput.value = c.examDate;
+
+        addCourseBtn.innerText = "ذخیره تغییرات";
+        go("add");
+        editIndex = index;
+      }
+      function deleteCourse(index) {
+        if (confirm("آیا مطمئن هستید؟")) {
+          courses.splice(index, 1);
+          save();
+          render();
+        }
+      }
+
+      /* Tasks */
+      function addTask() {
+        const name = taskInput.value.trim();
+        if (!name) return;
+        tasks.push({ name });
+        taskInput.value = "";
+        save();
+        render();
+      }
+      function deleteTask(i) {
+        tasks.splice(i, 1);
+        save();
+        render();
+      }
+
+      /* Render */
+      function render() {
+        courseList.innerHTML = "";
+        dailyPlan.innerHTML = "";
+        taskList.innerHTML = "";
+
+        const today = new Date();
+
+        const sorted = courses
+          .map((c, i) => {
+            const days = Math.max(
+              (new Date(c.examDate) - today) / (1000 * 3600 * 24),
+              1
+            );
+            const score = (1 / days) * 0.5 + c.difficulty * 0.3 + c.units * 0.2;
+            return {
+              ...c,
+              score,
+              index: i,
+              dailyStudy: Math.ceil(c.units * 1.5 + c.difficulty * 0.5),
+            };
+          })
+          .sort((a, b) => b.score - a.score);
+
+        sorted.forEach((c) => {
+          courseList.innerHTML += `<div class="course">${c.name} | ${c.units} واحد | سختی ${c.difficulty} 
+      <span>
+        <button onclick="editCourse(${c.index})">✏️</button>
+        <button onclick="deleteCourse(${c.index})">❌</button>
+      </span></div>`;
+
+          dailyPlan.innerHTML += `<div class="planCard">
+      <strong>${c.name}</strong><br>
+      واحد: ${c.units} | سختی: ${c.difficulty} | مطالعه امروز: <strong>${c.dailyStudy} ساعت</strong>
+    </div>`;
+        });
+
+        tasks.forEach((t, i) => {
+          taskList.innerHTML += `<div class="taskCard">${t.name} 
+      <button onclick="deleteTask(${i})">❌</button></div>`;
+        });
+
+        drawChart();
+        reportCount.innerText = "تعداد درس‌ها: " + courses.length;
+      }
+
+      /* Chart with labels */
+      function drawChart() {
+        const ctx = chart.getContext("2d");
+        ctx.clearRect(0, 0, 400, 180);
+        const width = 20;
+        const gap = 25;
+        ctx.fillStyle = "#6366f1";
+        courses.forEach((c, i) => {
+          const x = i * (width + gap) + 20;
+          const y = 150 - c.units * 20;
+          ctx.fillRect(x, y, width, c.units * 20);
+          ctx.fillStyle = theme === "dark" ? "white" : "black";
+          ctx.textAlign = "center";
+          ctx.fillText(c.name, x + width / 2, 170);
+          ctx.fillStyle = "#6366f1";
+        });
+      }
+
+      /* Enter Key */
+      [nameInput, examDateInput].forEach((input) =>
+        input.addEventListener("keypress", (e) => {
+          if (e.key === "Enter") addCourse();
+        })
+      );
+      taskInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") addTask();
+      });
+
+      render();
+    </script>
+  </body>
+</html>
